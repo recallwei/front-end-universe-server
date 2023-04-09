@@ -1,76 +1,92 @@
-import { PrismaClient } from "@prisma/client";
-import express from "express";
+import { PrismaClient } from '@prisma/client'
+import express, { type Express, type Request, type Response, type NextFunction } from 'express'
 
-const prisma = new PrismaClient();
+const prisma = new PrismaClient()
 
-const app = express();
-const port = process.env.PORT || 3000;
+const app: Express = express()
 
-app.use(express.json());
-app.use(express.raw({ type: "application/vnd.custom-type" }));
-app.use(express.text({ type: "text/html" }));
+// cors config
+app.all('*', function (req: Request, res: Response, next: NextFunction) {
+  res.header('Access-Control-Allow-Origin', '*')
+  res.header('Access-Control-Allow-Headers', 'X-Requested-With,Authorization')
+  res.header('Access-Control-Allow-Methods', 'PUT,POST,GET,DELETE,OPTIONS')
+  res.header('X-Powered-By', ' 3.2.1')
+  // res.header("Content-Type", "application/json;charset=utf-8");
+  next()
+})
 
-app.get("/todos", async (req, res) => {
-  const todos = await prisma.todo.findMany({
-    orderBy: { createdAt: "desc" },
-  });
+const port = process.env.PORT || 3000
 
-  res.json(todos);
-});
+app.use(express.json())
+app.use(express.raw({ type: 'application/vnd.custom-type' }))
+app.use(express.text({ type: 'text/html' }))
 
-app.post("/todos", async (req, res) => {
-  const todo = await prisma.todo.create({
+app.get('/sites', async (req, res) => {
+  const sites = await prisma.site.findMany({
+    orderBy: { createdAt: 'desc' }
+  })
+  return res.json(sites)
+})
+
+app.post('/sites', async (req, res) => {
+  const site = await prisma.site.create({
     data: {
-      completed: false,
-      createdAt: new Date(),
-      text: req.body.text ?? "Empty todo",
-    },
-  });
+      userId: 0,
+      createdAt: new Date()
+    }
+  })
 
-  return res.json(todo);
-});
+  return res.json(site)
+})
 
-app.get("/todos/:id", async (req, res) => {
-  const id = req.params.id;
-  const todo = await prisma.todo.findUnique({
+app.get('/sites/:id', async (req, res) => {
+  const id = Number(req.params.id)
+  const site = await prisma.site.findUnique({
+    where: { id }
+  })
+  return res.json(site)
+})
+
+app.put('/sites/:id', async (req, res) => {
+  const id = Number(req.params.id)
+  const todo = await prisma.site.update({
     where: { id },
-  });
+    data: req.body
+  })
+  return res.json(todo)
+})
 
-  return res.json(todo);
-});
+app.delete('/sites/:id', async (req, res) => {
+  const id = Number(req.params.id)
+  await prisma.site.delete({
+    where: { id }
+  })
+  return res.send({ status: 'ok' })
+})
 
-app.put("/todos/:id", async (req, res) => {
-  const id = req.params.id;
-  const todo = await prisma.todo.update({
-    where: { id },
-    data: req.body,
-  });
-
-  return res.json(todo);
-});
-
-app.delete("/todos/:id", async (req, res) => {
-  const id = req.params.id;
-  await prisma.todo.delete({
-    where: { id },
-  });
-
-  return res.send({ status: "ok" });
-});
-
-app.get("/", async (req, res) => {
+app.get('/', async (req, res) => {
   res.send(
     `
-  <h1>Todo REST API</h1>
+  <h1>REST API</h1>
   <h2>Available Routes</h2>
   <pre>
-    GET, POST /todos
-    GET, PUT, DELETE /todos/:id
+    GET, POST /sites
+    GET, PUT, DELETE /sites/:id
   </pre>
-  `.trim(),
-  );
-});
+  `.trim()
+  )
+})
 
-app.listen(Number(port), "0.0.0.0", () => {
-    console.log(`Example app listening at http://localhost:${port}`);
-});
+// error handler
+app.use(function (error: any, request: Request, response: Response) {
+  // set locals, only providing error in development
+  response.locals.message = error.message
+  response.locals.error = request.app.get('env') === 'development' ? error : {}
+  // render the error page
+  response.status(error.status || 500)
+  response.render('error')
+})
+
+app.listen(Number(port), '0.0.0.0', () => {
+  console.log(`Example app listening at http://localhost:${port}`)
+})

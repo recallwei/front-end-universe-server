@@ -10,9 +10,32 @@ generator client {
   provider = "prisma-client-js"
 }
 
-model Todo {
-  id        String   @id @default(uuid())
-  createdAt DateTime @default(now())
-  text      String
-  completed Boolean
+model User {
+  id        Int       @id @default(autoincrement())
+  createdAt DateTime  @default(now()) @map("created_at")
+  deletedAt DateTime? @map("deleted_at")
+  username  String    @unique
+  password  String?   @unique
+  email     String?   @unique
+  name      String?
+  avatarUrl String?   @map("avatar_url")
+  biography String?
+  location  String?
+  sites     Site[]
+
+  @@map("user")
+}
+
+model Site {
+  id          Int       @id @default(autoincrement())
+  createdAt   DateTime  @default(now()) @map("created_at")
+  deletedAt   DateTime? @map("deleted_at")
+  title       String?
+  description String?
+  href        String?
+  index       Int       @default(0)
+  userId      Int       @map("user_id")
+  User        User      @relation(fields: [userId], references: [id])
+
+  @@map("site")
 }
