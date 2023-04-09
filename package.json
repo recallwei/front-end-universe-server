@@ -17,7 +17,7 @@
   },
   "scripts": {
     "dev": "nodemon src/index.ts",
-    "build": "pnpm migrate:deploy && tsc",
+    "build": "yarn migrate:deploy && tsc",
     "start": "node dist/index.js",
     "migrate:dev": "prisma migrate dev",
     "migrate:deploy": "prisma migrate deploy",
